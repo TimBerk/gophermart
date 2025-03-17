@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:16.3
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U gophermart' ]
+      interval: 10s
+      start_period: 40s
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gophermart}
+      POSTGRES_USER: ${POSTGRES_USER:-gophermart}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gophermart}
+      PGTZ: ${TIME_ZONE:-Europe/Moscow}
+    volumes:
+      - db:/var/lib/postgresql/data:rw
+    ports:
+      - '5434:5432'
+
+volumes:
+  db: { }

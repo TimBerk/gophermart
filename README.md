@@ -1,12 +1,20 @@
-# go-musthave-diploma-tpl
+# gophermart
 
-Шаблон репозитория для индивидуального дипломного проекта курса «Go-разработчик»
+Репозитория для индивидуального дипломного проекта курса «Go-разработчик»
 
-# Начало работы
+# Used packages
 
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без
-   префикса `https://`) для создания модуля
+* [Logrus](https://github.com/sirupsen/logrus)
+* [Chi](https://github.com/go-chi/chi)
+* [EasyJSON](https://github.com/mailru/easyjson)
+* [JWT](https://github.com/golang-jwt/jwt)
+* [Pgx](https://github.com/jackc/pgx)
+* [goose](https://github.com/pressly/goose) - db migrations
+* [rate]( golang.org/x/time/rate)
+
+# Sources
+
+* [Implementing JWT based authentication in Golang](https://www.sohamkamani.com/golang/jwt-authentication/)
 
 # Обновление шаблона
 
