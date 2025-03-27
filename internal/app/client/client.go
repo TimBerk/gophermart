@@ -2,7 +2,6 @@ package client
 
 import (
 	model "TimBerk/gophermart/internal/app/models/order"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/sirupsen/logrus"
@@ -10,7 +9,6 @@ import (
 	"net/url"
 )
 
-const registerURI string = "/api/orders"
 const checkOrderURI string = "/api/orders/"
 
 type Client struct {
@@ -30,35 +28,6 @@ func (c Client) getFullPath(path string) (string, error) {
 
 	parsedURL.Path = path
 	return parsedURL.String(), nil
-}
-
-func (c Client) Register(order string) (int, error) {
-	action := "C.Register"
-
-	fullPath, err := c.getFullPath(registerURI)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to build path")
-		return http.StatusInternalServerError, err
-	}
-
-	requstData := model.OrderAccrualRegister{Number: order}
-	payload, err := json.Marshal(requstData)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to parse request body")
-		return http.StatusInternalServerError, err
-	}
-
-	buffer := bytes.NewBuffer(payload)
-
-	resp, err := http.Post(fullPath, "application/json", buffer)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to send request")
-		return http.StatusInternalServerError, err
-	}
-	defer resp.Body.Close()
-
-	logrus.WithFields(logrus.Fields{"action": action, "order": order, "response": resp, "body": resp.Body}).Info("get info about order")
-	return resp.StatusCode, nil
 }
 
 func (c Client) GetStatus(order string) (string, error) {

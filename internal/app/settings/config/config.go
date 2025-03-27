@@ -33,7 +33,7 @@ func NewConfig() *Config {
 
 	flag.StringVar(&cfg.RunAddress, "a", "localhost:8080", "HTTP server address")
 	flag.StringVar(&cfg.DatabaseURI, "d", "", "Database URI for PostgreSQL")
-	flag.StringVar(&cfg.AccrualSystemAddress, "r", "http://127.0.0.1:8081", "Base URL for accrual")
+	flag.StringVar(&cfg.AccrualSystemAddress, "r", "127.0.0.1:8081", "Base URL for accrual")
 	flag.StringVar(&cfg.LogLevel, "l", "info", "Logging level")
 	flag.Parse()
 

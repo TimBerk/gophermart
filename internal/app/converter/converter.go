@@ -5,7 +5,7 @@ import (
 	"TimBerk/gophermart/internal/app/store"
 )
 
-func OrderDbToOrderAPI(record store.OrderRecord) model.OrderDetailResponse {
+func OrderDBToOrderAPI(record store.OrderRecord) model.OrderDetailResponse {
 	item := model.OrderDetailResponse{
 		Number: record.Order,
 		Status: string(record.Status),

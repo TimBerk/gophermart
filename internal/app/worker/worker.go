@@ -7,7 +7,6 @@ import (
 	"TimBerk/gophermart/internal/app/store"
 	"context"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"sync"
 	"time"
 )
@@ -24,23 +23,12 @@ func preparedOrders(ctx context.Context, cfg *config.Config, dataStore *store.Po
 	for _, order := range orders {
 		var newStatus store.Status
 
-		if status == store.New {
-			respStatus, err := registerNewOrder(cfg.AccrualSystemAddress, order)
-			if err != nil || respStatus != http.StatusAccepted {
-				logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to register order status")
-				continue
-			}
-
-			newStatus = store.Processing
-		} else {
-			respStatus, err := checkOrderStatus(cfg.AccrualSystemAddress, order)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to check order status")
-				continue
-			}
-
-			newStatus = store.GetConstStatus(respStatus)
+		respStatus, err := checkOrderStatus(cfg.AccrualSystemAddress, order)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to check order status")
+			continue
 		}
+		newStatus = store.GetConstStatus(respStatus)
 
 		if err = dataStore.UpdateOrderStatus(ctx, order.Number, newStatus); err != nil {
 			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to update order status")
@@ -48,18 +36,6 @@ func preparedOrders(ctx context.Context, cfg *config.Config, dataStore *store.Po
 		}
 
 		logrus.WithFields(logrus.Fields{"action": action, "order": order.Number}).Info("status updated")
-	}
-
-	time.Sleep(2 * time.Second)
-}
-
-func RegisterOrders(ctx context.Context, cfg *config.Config, dataStore *store.PostgresStore, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	action := "W.RegisterOrders"
-
-	for {
-		preparedOrders(ctx, cfg, dataStore, store.New, action)
 	}
 }
 
@@ -70,12 +46,8 @@ func UpdateStateOrders(ctx context.Context, cfg *config.Config, dataStore *store
 
 	for {
 		preparedOrders(ctx, cfg, dataStore, store.Processing, action)
+		time.Sleep(2 * time.Second)
 	}
-}
-
-func registerNewOrder(url string, order model.OrderAccrual) (int, error) {
-	accrualClient := client.NewClient(url)
-	return accrualClient.Register(order.Number)
 }
 
 func checkOrderStatus(url string, order model.OrderAccrual) (string, error) {

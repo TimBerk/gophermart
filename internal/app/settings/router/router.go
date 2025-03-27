@@ -3,7 +3,6 @@ package router
 import (
 	"TimBerk/gophermart/internal/app/handlers"
 	"TimBerk/gophermart/internal/app/middlewares/auth"
-	"TimBerk/gophermart/internal/app/middlewares/rate_limit"
 	"TimBerk/gophermart/internal/app/settings/config"
 	"context"
 	"github.com/go-chi/chi/v5"
@@ -11,13 +10,11 @@ import (
 )
 
 func InitRouter(dataStore handlers.Store, cfg *config.Config, ctx context.Context) chi.Router {
-	rateLimiter := rate_limit.NewRateLimiter()
 	handler := handlers.NewHandler(dataStore, cfg, ctx)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 	router.Use(auth.Authentication(cfg))
-	router.Use(rate_limit.RateLimit(rateLimiter))
 
 	router.Post("/api/user/register", handler.Register)
 	router.Post("/api/user/login", handler.Login)

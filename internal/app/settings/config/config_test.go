@@ -21,7 +21,7 @@ func TestInitConfig(t *testing.T) {
 			envServerAddr:        "",
 			AccrualSystemAddress: "",
 			expectedAddr:         "localhost:8080",
-			expectedAcc:          "localhost:8081",
+			expectedAcc:          "127.0.0.1:8081",
 		},
 		{
 			name:                 "Environment variables",
@@ -35,7 +35,7 @@ func TestInitConfig(t *testing.T) {
 			envServerAddr:        "",
 			AccrualSystemAddress: "",
 			expectedAddr:         "localhost:8080",
-			expectedAcc:          "localhost:8081",
+			expectedAcc:          "127.0.0.1:8081",
 		},
 		{
 			name:                 "Environment variables override flags",

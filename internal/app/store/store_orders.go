@@ -95,9 +95,9 @@ func (s *PostgresStore) GetOrdersForAccrual(ctx context.Context, status Status) 
 	var orders []model.OrderAccrual
 	for rows.Next() {
 		var o model.OrderAccrual
-		if errRows := rows.Scan(&o.Number, &o.Status); err != nil {
+		if errRows := rows.Scan(&o.Number, &o.Status); errRows != nil {
 			logrus.WithFields(logrus.Fields{"action": "DB.GetOrdersForAccrual", "error": errRows}).Error("failed to find order")
-			return nil, err
+			return nil, errRows
 		}
 		orders = append(orders, o)
 	}

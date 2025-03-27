@@ -14,16 +14,16 @@ import (
 
 type JWTRecord struct {
 	Username string `json:"username"`
-	UserId   int64  `json:"id"`
+	UserID   int64  `json:"id"`
 	jwt.RegisteredClaims
 }
 
-func generateToken(cfg *config.Config, userData auth.RequestData, user_id int64) (time.Time, string, error) {
+func generateToken(cfg *config.Config, userData auth.RequestData, userID int64) (time.Time, string, error) {
 	durationTime := time.Duration(cfg.ExpireJWT) * time.Minute
 	expirationTime := time.Now().Add(durationTime)
 	claims := &JWTRecord{
 		Username: userData.Username,
-		UserId:   user_id,
+		UserID:   userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 		},
@@ -56,14 +56,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user_id, err := h.store.CheckUser(h.ctx, userData.Username)
+	userID, err := h.store.CheckUser(h.ctx, userData.Username)
 	if err != nil {
 		errMessage = "failed to find user"
 		logrus.WithFields(logrus.Fields{"action": action, "user": userData.Username, "error": err}).Error(errMessage)
 		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
 		return
 	}
-	if user_id != 0 {
+	if userID != 0 {
 		errMessage = "user was registered"
 		logrus.WithFields(logrus.Fields{"action": action, "user": userData.Username, "error": err}).Error(errMessage)
 		responses.WriteJSONError(w, errMessage, http.StatusConflict)
@@ -77,7 +77,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
 		return
 	}
-	user_id, err = h.store.AddUser(h.ctx, userData.Username, hashedPassword)
+	userID, err = h.store.AddUser(h.ctx, userData.Username, hashedPassword)
 	if err != nil {
 		errMessage = "failed to register user"
 		logrus.WithFields(logrus.Fields{"action": action, "user": userData.Username, "error": err}).Error(errMessage)
@@ -85,7 +85,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expirationTime, tokenString, err := generateToken(h.cfg, userData, user_id)
+	expirationTime, tokenString, err := generateToken(h.cfg, userData, userID)
 	if err != nil {
 		errMessage = "failed to generate token"
 		logrus.WithFields(logrus.Fields{"action": action, "user": userData.Username, "error": err}).Error(errMessage)

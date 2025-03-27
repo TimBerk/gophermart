@@ -144,7 +144,7 @@ func (h *Handler) GetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiItem := converter.OrderDbToOrderAPI(order)
+	apiItem := converter.OrderDBToOrderAPI(order)
 	jsonRecord, err := easyjson.Marshal(apiItem)
 	if err != nil {
 		errMessage = "failed to parse order"

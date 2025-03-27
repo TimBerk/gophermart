@@ -55,10 +55,10 @@ func NewPostgresStore(cfg *config.Config) (*PostgresStore, error) {
 	return pgStore, nil
 }
 
-func (pg *PostgresStore) initDB() {
+func (s *PostgresStore) initDB() {
 	migrationDir := "migrations"
 
-	conn, err := pg.db.Acquire(context.Background())
+	conn, err := s.db.Acquire(context.Background())
 	if err != nil {
 		logrus.WithField("error", err).Error("failed to acquire connection")
 		return
@@ -70,7 +70,7 @@ func (pg *PostgresStore) initDB() {
 		return
 	}
 
-	db := stdlib.OpenDBFromPool(pg.db)
+	db := stdlib.OpenDBFromPool(s.db)
 
 	if err = goose.Up(db, migrationDir); err != nil {
 		logrus.WithField("error", err).Error("failed to run migrations")
@@ -80,6 +80,6 @@ func (pg *PostgresStore) initDB() {
 	logrus.Info("Migrations applied successfully!")
 }
 
-func (pg *PostgresStore) BeginTx(ctx context.Context) (pgx.Tx, error) {
-	return pg.db.Begin(ctx)
+func (s *PostgresStore) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return s.db.Begin(ctx)
 }
