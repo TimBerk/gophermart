@@ -86,7 +86,7 @@ func (h *Handler) WithdrawBalance(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errMessage = "failed to validate request data"
 		logFields.WithField("error", err).Error(errMessage)
-		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
+		responses.WriteJSONError(w, errMessage, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -97,54 +97,13 @@ func (h *Handler) WithdrawBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := h.store.GetOrder(h.ctx, requestData.Number)
-	if err != nil || order.UserID != userID {
-		errMessage = "failed to find order"
-		logFields.WithField("error", err).Error(errMessage)
-		responses.WriteJSONError(w, errMessage, http.StatusUnprocessableEntity)
-		return
-	}
-
-	// Begin a new transaction
-	tx, err := h.store.BeginTx(h.ctx)
+	err = h.store.AddWithdrawal(h.ctx, userID, requestData.Number, requestData.Sum)
 	if err != nil {
 		errMessage = "failed to update order"
 		logFields.WithField("error", err).Error(errMessage)
 		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
 		return
 	}
-
-	defer func() {
-		if err != nil {
-			if rbErr := tx.Rollback(h.ctx); rbErr != nil {
-				logFields.WithField("error", rbErr).Error("failed to rollback transaction")
-			}
-		}
-	}()
-
-	err = h.store.UpdateOrderBalance(h.ctx, tx, requestData.Number, requestData.Sum)
-	if err != nil {
-		errMessage = "failed to update order"
-		logFields.WithField("error", err).Error(errMessage)
-		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
-		return
-	}
-
-	// Возможно перенести логику в триггер
-	err = h.store.UpdateBalance(h.ctx, tx, userID, requestData.Sum)
-	if err != nil {
-		errMessage = "failed to update user balance"
-		logFields.WithField("error", err).Error(errMessage)
-		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
-		return
-	}
-
-	if err = tx.Commit(h.ctx); err != nil {
-		errMessage = "failed to commit transaction"
-		logFields.WithField("error", err).Error(errMessage)
-		responses.WriteJSONError(w, errMessage, http.StatusInternalServerError)
-	}
-
 }
 
 func (h *Handler) GetWithdraw(w http.ResponseWriter, r *http.Request) {

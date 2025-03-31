@@ -30,26 +30,26 @@ func (c Client) getFullPath(path string) (string, error) {
 	return parsedURL.String(), nil
 }
 
-func (c Client) GetStatus(order string) (string, error) {
+func (c Client) GetStatus(order string) (*model.OrderAccrual, error) {
 	action := "C.GetStatus"
 
 	fullPath, err := c.getFullPath(checkOrderURI + order)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"action": "C.Register", "order": order, "error": err}).Error("failed to build path")
-		return "", err
+		return nil, err
 	}
 
 	resp, err := http.Get(fullPath)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to send request")
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	logrus.WithFields(logrus.Fields{"action": action, "order": order, "response": resp, "body": resp.Body}).Info("get info about order")
 
 	if resp.StatusCode > 202 {
-		return "", fmt.Errorf("order not ready")
+		return nil, fmt.Errorf("order not ready")
 	}
 
 	decoder := json.NewDecoder(resp.Body)
@@ -58,8 +58,8 @@ func (c Client) GetStatus(order string) (string, error) {
 	err = decoder.Decode(&orderAccrual)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to parse url")
-		return "", err
+		return nil, err
 	}
 
-	return orderAccrual.Status, nil
+	return &orderAccrual, nil
 }

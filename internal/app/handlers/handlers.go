@@ -26,12 +26,13 @@ type Store interface {
 	AddOrder(ctx context.Context, userID int64, order string) error
 	GetOrder(ctx context.Context, order string) (store.OrderRecord, error)
 	GetOrderList(ctx context.Context, userID int64) (order.OrderListResponse, error)
-	GetOrdersForAccrual(ctx context.Context, status store.Status) ([]order.OrderAccrual, error)
-	UpdateOrderBalance(ctx context.Context, tx pgx.Tx, order string, sum int) error
-	UpdateOrderStatus(ctx context.Context, order string, status store.Status) error
+	GetOrdersForAccrual(ctx context.Context) ([]order.UserOrder, error)
+	AddWithdrawal(ctx context.Context, userID int64, order string, sum float64) error
+	UpdateOrderStatus(ctx context.Context, userID int64, order string, status store.Status, accrual float64) error
 
 	GetBalance(ctx context.Context, userID int64) (balance.Balance, error)
-	UpdateBalance(ctx context.Context, tx pgx.Tx, userID int64, sum int) error
+	AddBalance(ctx context.Context, tx pgx.Tx, userID int64, sum float64) error
+	WithdrawBalance(ctx context.Context, tx pgx.Tx, userID int64, sum float64) error
 	GetOrderWithdrawals(ctx context.Context, userID int64) (balance.WithdrawnList, error)
 }
 

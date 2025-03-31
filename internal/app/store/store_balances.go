@@ -18,14 +18,20 @@ func (s *PostgresStore) GetBalance(ctx context.Context, userID int64) (balance.B
 	return record, err
 }
 
-func (s *PostgresStore) UpdateBalance(ctx context.Context, tx pgx.Tx, userID int64, sum int) error {
+func (s *PostgresStore) WithdrawBalance(ctx context.Context, tx pgx.Tx, userID int64, sum float64) error {
 	query := `UPDATE balance SET current = current - $2, withdrawn = withdrawn + $2 WHERE user_id = $1`
 	_, err := tx.Exec(ctx, query, userID, sum)
 	return err
 }
 
+func (s *PostgresStore) AddBalance(ctx context.Context, tx pgx.Tx, userID int64, sum float64) error {
+	query := `UPDATE balance SET current = current + $2 WHERE user_id = $1`
+	_, err := tx.Exec(ctx, query, userID, sum)
+	return err
+}
+
 func (s *PostgresStore) GetOrderWithdrawals(ctx context.Context, userID int64) (balance.WithdrawnList, error) {
-	query := `SELECT order_number, accrual, created_at FROM orders WHERE user_id = $1 and status in ('PROCESSED') ORDER BY created_at DESC`
+	query := `SELECT order_number, sum, created_at FROM withdrawals WHERE user_id = $1 ORDER BY created_at DESC`
 	rows, err := s.db.Query(ctx, query, userID)
 	if err != nil {
 		return nil, err

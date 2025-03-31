@@ -39,9 +39,11 @@ func DecodeModelsBalance(in *jlexer.Lexer, out *WithdrawnResponse) {
 		case "order":
 			out.Number = string(in.String())
 		case "sum":
-			out.Sum = int(in.Int())
+			out.Sum = float64(in.Float64())
 		case "processed_at":
-			out.CreatedAt = string(in.String())
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.CreatedAt).UnmarshalJSON(data))
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -64,12 +66,12 @@ func EncodeModelsBalance(out *jwriter.Writer, in WithdrawnResponse) {
 	{
 		const prefix string = ",\"sum\":"
 		out.RawString(prefix)
-		out.Int(int(in.Sum))
+		out.Float64(float64(in.Sum))
 	}
 	{
 		const prefix string = ",\"processed_at\":"
 		out.RawString(prefix)
-		out.String(string(in.CreatedAt))
+		out.Raw((in.CreatedAt).MarshalJSON())
 	}
 	out.RawByte('}')
 }
@@ -119,7 +121,7 @@ func DecodeModelsBalance1(in *jlexer.Lexer, out *WithdrawnRequest) {
 		case "order":
 			out.Number = string(in.String())
 		case "sum":
-			out.Sum = int(in.Int())
+			out.Sum = float64(in.Float64())
 		default:
 			in.SkipRecursive()
 		}
@@ -142,7 +144,7 @@ func EncodeModelsBalance1(out *jwriter.Writer, in WithdrawnRequest) {
 	{
 		const prefix string = ",\"sum\":"
 		out.RawString(prefix)
-		out.Int(int(in.Sum))
+		out.Float64(float64(in.Sum))
 	}
 	out.RawByte('}')
 }
@@ -258,7 +260,7 @@ func DecodeModelsBalance3(in *jlexer.Lexer, out *Balance) {
 		case "current":
 			out.Current = float64(in.Float64())
 		case "withdrawn":
-			out.Withdrawn = int(in.Int())
+			out.Withdrawn = float64(in.Float64())
 		default:
 			in.SkipRecursive()
 		}
@@ -281,7 +283,7 @@ func EncodeModelsBalance3(out *jwriter.Writer, in Balance) {
 	{
 		const prefix string = ",\"withdrawn\":"
 		out.RawString(prefix)
-		out.Int(int(in.Withdrawn))
+		out.Float64(float64(in.Withdrawn))
 	}
 	out.RawByte('}')
 }

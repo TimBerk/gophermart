@@ -17,7 +17,87 @@ var (
 	_ easyjson.Marshaler
 )
 
-func DecodeModelsOrder(in *jlexer.Lexer, out *OrderResponse) {
+func DecodeAppModelsOrder(in *jlexer.Lexer, out *UserOrder) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "user_id":
+			out.UserID = int64(in.Int64())
+		case "order":
+			out.Number = string(in.String())
+		case "status":
+			out.Status = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func EncodeAppModelsOrder(out *jwriter.Writer, in UserOrder) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"user_id\":"
+		out.RawString(prefix[1:])
+		out.Int64(int64(in.UserID))
+	}
+	{
+		const prefix string = ",\"order\":"
+		out.RawString(prefix)
+		out.String(string(in.Number))
+	}
+	{
+		const prefix string = ",\"status\":"
+		out.RawString(prefix)
+		out.String(string(in.Status))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v UserOrder) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	EncodeAppModelsOrder(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v UserOrder) MarshalEasyJSON(w *jwriter.Writer) {
+	EncodeAppModelsOrder(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *UserOrder) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	DecodeAppModelsOrder(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *UserOrder) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	DecodeAppModelsOrder(l, v)
+}
+func DecodeAppModelsOrder1(in *jlexer.Lexer, out *OrderResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -64,7 +144,7 @@ func DecodeModelsOrder(in *jlexer.Lexer, out *OrderResponse) {
 		in.Consumed()
 	}
 }
-func EncodeModelsOrder(out *jwriter.Writer, in OrderResponse) {
+func EncodeAppModelsOrder1(out *jwriter.Writer, in OrderResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -94,27 +174,27 @@ func EncodeModelsOrder(out *jwriter.Writer, in OrderResponse) {
 // MarshalJSON supports json.Marshaler interface
 func (v OrderResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	EncodeModelsOrder(&w, v)
+	EncodeAppModelsOrder1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OrderResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	EncodeModelsOrder(w, v)
+	EncodeAppModelsOrder1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OrderResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	DecodeModelsOrder(&r, v)
+	DecodeAppModelsOrder1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OrderResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	DecodeModelsOrder(l, v)
+	DecodeAppModelsOrder1(l, v)
 }
-func DecodeModelsOrder1(in *jlexer.Lexer, out *OrderListResponse) {
+func DecodeAppModelsOrder2(in *jlexer.Lexer, out *OrderListResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		in.Skip()
@@ -142,7 +222,7 @@ func DecodeModelsOrder1(in *jlexer.Lexer, out *OrderListResponse) {
 		in.Consumed()
 	}
 }
-func EncodeModelsOrder1(out *jwriter.Writer, in OrderListResponse) {
+func EncodeAppModelsOrder2(out *jwriter.Writer, in OrderListResponse) {
 	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 		out.RawString("null")
 	} else {
@@ -160,27 +240,27 @@ func EncodeModelsOrder1(out *jwriter.Writer, in OrderListResponse) {
 // MarshalJSON supports json.Marshaler interface
 func (v OrderListResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	EncodeModelsOrder1(&w, v)
+	EncodeAppModelsOrder2(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OrderListResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	EncodeModelsOrder1(w, v)
+	EncodeAppModelsOrder2(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OrderListResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	DecodeModelsOrder1(&r, v)
+	DecodeAppModelsOrder2(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OrderListResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	DecodeModelsOrder1(l, v)
+	DecodeAppModelsOrder2(l, v)
 }
-func DecodeModelsOrder2(in *jlexer.Lexer, out *OrderDetailResponse) {
+func DecodeAppModelsOrder3(in *jlexer.Lexer, out *OrderDetailResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -223,7 +303,7 @@ func DecodeModelsOrder2(in *jlexer.Lexer, out *OrderDetailResponse) {
 		in.Consumed()
 	}
 }
-func EncodeModelsOrder2(out *jwriter.Writer, in OrderDetailResponse) {
+func EncodeAppModelsOrder3(out *jwriter.Writer, in OrderDetailResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -248,27 +328,27 @@ func EncodeModelsOrder2(out *jwriter.Writer, in OrderDetailResponse) {
 // MarshalJSON supports json.Marshaler interface
 func (v OrderDetailResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	EncodeModelsOrder2(&w, v)
+	EncodeAppModelsOrder3(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OrderDetailResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	EncodeModelsOrder2(w, v)
+	EncodeAppModelsOrder3(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OrderDetailResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	DecodeModelsOrder2(&r, v)
+	DecodeAppModelsOrder3(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OrderDetailResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	DecodeModelsOrder2(l, v)
+	DecodeAppModelsOrder3(l, v)
 }
-func DecodeModelsOrder3(in *jlexer.Lexer, out *OrderAccrualRegister) {
+func DecodeAppModelsOrder4(in *jlexer.Lexer, out *OrderAccrualRegister) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -299,7 +379,7 @@ func DecodeModelsOrder3(in *jlexer.Lexer, out *OrderAccrualRegister) {
 		in.Consumed()
 	}
 }
-func EncodeModelsOrder3(out *jwriter.Writer, in OrderAccrualRegister) {
+func EncodeAppModelsOrder4(out *jwriter.Writer, in OrderAccrualRegister) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -314,27 +394,27 @@ func EncodeModelsOrder3(out *jwriter.Writer, in OrderAccrualRegister) {
 // MarshalJSON supports json.Marshaler interface
 func (v OrderAccrualRegister) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	EncodeModelsOrder3(&w, v)
+	EncodeAppModelsOrder4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OrderAccrualRegister) MarshalEasyJSON(w *jwriter.Writer) {
-	EncodeModelsOrder3(w, v)
+	EncodeAppModelsOrder4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OrderAccrualRegister) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	DecodeModelsOrder3(&r, v)
+	DecodeAppModelsOrder4(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OrderAccrualRegister) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	DecodeModelsOrder3(l, v)
+	DecodeAppModelsOrder4(l, v)
 }
-func DecodeModelsOrder4(in *jlexer.Lexer, out *OrderAccrual) {
+func DecodeAppModelsOrder5(in *jlexer.Lexer, out *OrderAccrual) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -357,6 +437,16 @@ func DecodeModelsOrder4(in *jlexer.Lexer, out *OrderAccrual) {
 			out.Number = string(in.String())
 		case "status":
 			out.Status = string(in.String())
+		case "accrual":
+			if in.IsNull() {
+				in.Skip()
+				out.Accrual = nil
+			} else {
+				if out.Accrual == nil {
+					out.Accrual = new(float64)
+				}
+				*out.Accrual = float64(in.Float64())
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -367,7 +457,7 @@ func DecodeModelsOrder4(in *jlexer.Lexer, out *OrderAccrual) {
 		in.Consumed()
 	}
 }
-func EncodeModelsOrder4(out *jwriter.Writer, in OrderAccrual) {
+func EncodeAppModelsOrder5(out *jwriter.Writer, in OrderAccrual) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -381,29 +471,34 @@ func EncodeModelsOrder4(out *jwriter.Writer, in OrderAccrual) {
 		out.RawString(prefix)
 		out.String(string(in.Status))
 	}
+	if in.Accrual != nil {
+		const prefix string = ",\"accrual\":"
+		out.RawString(prefix)
+		out.Float64(float64(*in.Accrual))
+	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
 func (v OrderAccrual) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	EncodeModelsOrder4(&w, v)
+	EncodeAppModelsOrder5(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v OrderAccrual) MarshalEasyJSON(w *jwriter.Writer) {
-	EncodeModelsOrder4(w, v)
+	EncodeAppModelsOrder5(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *OrderAccrual) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	DecodeModelsOrder4(&r, v)
+	DecodeAppModelsOrder5(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *OrderAccrual) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	DecodeModelsOrder4(l, v)
+	DecodeAppModelsOrder5(l, v)
 }

@@ -4,7 +4,7 @@ import (
 	model "TimBerk/gophermart/internal/app/models/order"
 	"context"
 	"database/sql"
-	"github.com/jackc/pgx/v5"
+	"fmt"
 	"github.com/sirupsen/logrus"
 )
 
@@ -78,24 +78,43 @@ func (s *PostgresStore) GetOrderList(ctx context.Context, userID int64) (model.O
 	return records, err
 }
 
-func (s *PostgresStore) UpdateOrderBalance(ctx context.Context, tx pgx.Tx, order string, sum int) error {
-	query := `UPDATE orders SET status = $1, accrual = $2 WHERE order_number = $3`
-	_, err := tx.Exec(ctx, query, Processed, sum, order)
+func (s *PostgresStore) AddWithdrawal(ctx context.Context, userID int64, order string, sum float64) error {
+	tx, err := s.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transcation: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	query := `INSERT INTO withdrawals (user_id, order_number, sum) VALUES ($1, $2, $3)`
+	_, err = tx.Exec(ctx, query, userID, order, sum)
+	if err != nil {
+		return fmt.Errorf("create withdrawals error: %w", err)
+	}
+
+	err = s.WithdrawBalance(ctx, tx, userID, sum)
+	if err != nil {
+		return fmt.Errorf("update user balance error: %w", err)
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return err
 }
 
-func (s *PostgresStore) GetOrdersForAccrual(ctx context.Context, status Status) ([]model.OrderAccrual, error) {
-	query := `SELECT order_number, status FROM orders WHERE status = $1`
-	rows, err := s.db.Query(ctx, query, status)
+func (s *PostgresStore) GetOrdersForAccrual(ctx context.Context) ([]model.UserOrder, error) {
+	query := `SELECT user_id, order_number, status FROM orders WHERE status in ('NEW', 'PROCESSING')`
+	rows, err := s.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var orders []model.OrderAccrual
+	var orders []model.UserOrder
 	for rows.Next() {
-		var o model.OrderAccrual
-		if errRows := rows.Scan(&o.Number, &o.Status); errRows != nil {
+		var o model.UserOrder
+		if errRows := rows.Scan(&o.UserID, &o.Number, &o.Status); errRows != nil {
 			logrus.WithFields(logrus.Fields{"action": "DB.GetOrdersForAccrual", "error": errRows}).Error("failed to find order")
 			return nil, errRows
 		}
@@ -104,8 +123,27 @@ func (s *PostgresStore) GetOrdersForAccrual(ctx context.Context, status Status) 
 	return orders, nil
 }
 
-func (s *PostgresStore) UpdateOrderStatus(ctx context.Context, order string, status Status) error {
-	query := `UPDATE orders SET status = $1 WHERE order_number = $2`
-	_, err := s.db.Exec(ctx, query, status, order)
+func (s *PostgresStore) UpdateOrderStatus(ctx context.Context, userID int64, order string, status Status, accrual float64) error {
+	tx, err := s.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transcation: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	query := `UPDATE orders SET status = $1, accrual = $2 WHERE order_number = $3`
+	_, err = s.db.Exec(ctx, query, status, accrual, order)
+	if err != nil {
+		return fmt.Errorf("update order status with accrual error: %w", err)
+	}
+
+	err = s.AddBalance(ctx, tx, userID, accrual)
+	if err != nil {
+		return fmt.Errorf("update user balance error: %w", err)
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return err
 }

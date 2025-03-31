@@ -3,10 +3,10 @@ package store
 import (
 	"TimBerk/gophermart/internal/app/settings/config"
 	"context"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"sync"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pressly/goose/v3"
 	"github.com/sirupsen/logrus"

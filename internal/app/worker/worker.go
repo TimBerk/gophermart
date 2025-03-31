@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-func preparedOrders(ctx context.Context, cfg *config.Config, dataStore *store.PostgresStore, status store.Status, action string) {
-	orders, err := dataStore.GetOrdersForAccrual(ctx, status)
+func preparedOrders(ctx context.Context, cfg *config.Config, dataStore *store.PostgresStore, action string) {
+	orders, err := dataStore.GetOrdersForAccrual(ctx)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{"action": action, "error": err}).Error("failed to get list orders")
 		return
@@ -23,14 +23,22 @@ func preparedOrders(ctx context.Context, cfg *config.Config, dataStore *store.Po
 	for _, order := range orders {
 		var newStatus store.Status
 
-		respStatus, err := checkOrderStatus(cfg.AccrualSystemAddress, order)
+		respData, err := checkOrderStatus(cfg.AccrualSystemAddress, order)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to check order status")
 			continue
 		}
-		newStatus = store.GetConstStatus(respStatus)
+		newStatus = store.GetConstStatus(respData.Status)
+		accrual := 0.0
+		if newStatus == store.Processed {
+			if respData.Accrual == nil {
+				logrus.WithFields(logrus.Fields{"action": action, "order": order.Number}).Error("incorrect order accrual")
+				continue
+			}
+			accrual = *respData.Accrual
+		}
 
-		if err = dataStore.UpdateOrderStatus(ctx, order.Number, newStatus); err != nil {
+		if err = dataStore.UpdateOrderStatus(ctx, order.UserID, order.Number, newStatus, accrual); err != nil {
 			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to update order status")
 			continue
 		}
@@ -45,12 +53,12 @@ func UpdateStateOrders(ctx context.Context, cfg *config.Config, dataStore *store
 	action := "W.UpdateStateOrders"
 
 	for {
-		preparedOrders(ctx, cfg, dataStore, store.Processing, action)
+		preparedOrders(ctx, cfg, dataStore, action)
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func checkOrderStatus(url string, order model.OrderAccrual) (string, error) {
+func checkOrderStatus(url string, order model.UserOrder) (*model.OrderAccrual, error) {
 	accrualClient := client.NewClient(url)
 	return accrualClient.GetStatus(order.Number)
 }

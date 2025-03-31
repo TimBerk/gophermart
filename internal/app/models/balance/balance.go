@@ -3,26 +3,27 @@ package balance
 import (
 	"TimBerk/gophermart/pkg/validators"
 	"fmt"
+	"time"
 )
 
 //go:generate easyjson -all -snake_case balance.go
 
 type Balance struct {
 	Current   float64 `json:"current"`
-	Withdrawn int     `json:"withdrawn"`
+	Withdrawn float64 `json:"withdrawn"`
 }
 
 //easyjson:json
 type WithdrawnRequest struct {
-	Number string `json:"order"`
-	Sum    int    `json:"sum"`
+	Number string  `json:"order"`
+	Sum    float64 `json:"sum"`
 }
 
 //easyjson:json
 type WithdrawnResponse struct {
-	Number    string `json:"order"`
-	Sum       int    `json:"sum"`
-	CreatedAt string `json:"processed_at"`
+	Number    string    `json:"order"`
+	Sum       float64   `json:"sum"`
+	CreatedAt time.Time `json:"processed_at"`
 }
 
 //easyjson:json

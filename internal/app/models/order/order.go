@@ -30,6 +30,14 @@ type OrderAccrualRegister struct {
 
 //easyjson:json
 type OrderAccrual struct {
+	Number  string   `json:"order"`
+	Status  string   `json:"status"`
+	Accrual *float64 `json:"accrual,omitempty"`
+}
+
+//easyjson:json
+type UserOrder struct {
+	UserID int64  `json:"user_id"`
 	Number string `json:"order"`
 	Status string `json:"status"`
 }
