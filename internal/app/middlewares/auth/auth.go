@@ -25,8 +25,9 @@ type JWTRecord struct {
 
 func getToken(r *http.Request) (string, bool) {
 	authHeader := r.Header.Get("Authorization")
-	if authHeader != "" {
-		return strings.TrimPrefix(authHeader, "Bearer "), true
+	bearerPrefix := "Bearer "
+	if authHeader != "" && strings.HasPrefix(authHeader, bearerPrefix) {
+		return strings.TrimPrefix(authHeader, bearerPrefix), true
 	}
 
 	cookie, err := r.Cookie("token")

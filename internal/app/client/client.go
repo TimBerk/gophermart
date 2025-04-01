@@ -57,7 +57,7 @@ func (c Client) GetStatus(order string) (*model.OrderAccrual, error) {
 	var orderAccrual model.OrderAccrual
 	err = decoder.Decode(&orderAccrual)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to parse url")
+		logrus.WithFields(logrus.Fields{"action": action, "order": order, "error": err}).Error("failed to decode response")
 		return nil, err
 	}
 
