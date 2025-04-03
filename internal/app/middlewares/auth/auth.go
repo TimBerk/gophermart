@@ -41,11 +41,6 @@ func getToken(r *http.Request) (string, bool) {
 func Authentication(cfg *config.Config) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/api/user/register" || r.URL.Path == "/api/user/login" {
-				next.ServeHTTP(w, r) // Skip authentication
-				return
-			}
-
 			var errMessage string
 
 			tokenString, ok := getToken(r)

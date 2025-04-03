@@ -19,8 +19,13 @@ func (s *PostgresStore) GetBalance(ctx context.Context, userID int64) (balance.B
 }
 
 func (s *PostgresStore) WithdrawBalance(ctx context.Context, tx pgx.Tx, userID int64, sum float64) error {
+	_, err := tx.Exec(ctx, `SELECT 1 FROM balance WHERE user_id = $1 FOR UPDATE`, userID)
+	if err != nil {
+		return err
+	}
+
 	query := `UPDATE balance SET current = current - $2, withdrawn = withdrawn + $2 WHERE user_id = $1`
-	_, err := tx.Exec(ctx, query, userID, sum)
+	_, err = tx.Exec(ctx, query, userID, sum)
 	return err
 }
 

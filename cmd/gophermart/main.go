@@ -44,6 +44,7 @@ func main() {
 		Handler: router,
 	}
 
+	wgBackgroud.Add(2)
 	go func() {
 		defer wgBackgroud.Done()
 		logger.Log.WithField("address", cfg.RunAddress).Info("Starting server")

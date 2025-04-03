@@ -6,10 +6,21 @@ import (
 	"TimBerk/gophermart/internal/app/settings/config"
 	"TimBerk/gophermart/internal/app/store"
 	"context"
+	"errors"
 	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
+
+type APIError struct {
+	Message    string
+	RetryAfter time.Duration
+	StatusCode int
+}
+
+func (e *APIError) Error() string {
+	return e.Message
+}
 
 type OrderStore interface {
 	GetOrdersForAccrual(ctx context.Context) ([]model.UserOrder, error)
@@ -23,38 +34,48 @@ func preparedOrders(
 	action string,
 	checkOrderStatus func(string, model.UserOrder) (*model.OrderAccrual, error),
 ) {
+	logFields := logrus.WithFields(logrus.Fields{"action": action})
+
 	orders, err := dataStore.GetOrdersForAccrual(ctx)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{"action": action, "error": err}).Error("failed to get list orders")
+		logFields.WithField("error", err).Error("failed to get list orders")
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{"action": action, "count": len(orders)}).Info("started work with orders")
+	logFields.WithField("count", len(orders)).Info("started work with orders")
 
 	for _, order := range orders {
 		var newStatus store.Status
 
 		respData, errCheck := checkOrderStatus(cfg.AccrualSystemAddress, order)
 		if errCheck != nil {
-			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": errCheck}).Error("failed to check order status")
+			logFields.WithFields(logrus.Fields{"order": order.Number, "error": errCheck}).Error("failed to check order status")
+
+			if retryAfter := getRetryAfterFromError(errCheck); retryAfter > 0 {
+				logFields.WithFields(logrus.Fields{
+					"order":      order.Number,
+					"retryAfter": retryAfter,
+				}).Info("waiting due to Retry-After")
+				time.Sleep(retryAfter)
+			}
 			continue
 		}
 		newStatus = store.GetConstStatus(respData.Status)
 		accrual := 0.0
 		if newStatus == store.Processed {
 			if respData.Accrual == nil {
-				logrus.WithFields(logrus.Fields{"action": action, "order": order.Number}).Error("incorrect order accrual")
+				logFields.WithField("order", order.Number).Error("incorrect order accrual")
 				continue
 			}
 			accrual = *respData.Accrual
 		}
 
 		if err = dataStore.UpdateOrderStatus(ctx, order.UserID, order.Number, newStatus, accrual); err != nil {
-			logrus.WithFields(logrus.Fields{"action": action, "order": order.Number, "error": err}).Error("failed to update order status")
+			logFields.WithFields(logrus.Fields{"order": order.Number, "error": err}).Error("failed to update order status")
 			continue
 		}
 
-		logrus.WithFields(logrus.Fields{"action": action, "order": order.Number}).Info("status updated")
+		logFields.WithField("order", order.Number).Info("status updated")
 	}
 }
 
@@ -72,4 +93,12 @@ func UpdateStateOrders(ctx context.Context, cfg *config.Config, dataStore OrderS
 func CheckOrderStatus(url string, order model.UserOrder) (*model.OrderAccrual, error) {
 	accrualClient := client.NewClient(url)
 	return accrualClient.GetStatus(order.Number)
+}
+
+func getRetryAfterFromError(err error) time.Duration {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) && apiErr.RetryAfter > 0 {
+		return apiErr.RetryAfter
+	}
+	return 0
 }

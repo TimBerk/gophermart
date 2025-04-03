@@ -44,3 +44,9 @@ migrate-status:
 # Create a new migration file
 migrate-create:
 	goose -dir $(MIGRATIONS_DIR) create $(NAME) sql
+
+add-autotest:
+	git remote add -m master template https://github.com/yandex-praktikum/go-musthave-diploma-tpl.git
+
+update-autotest:
+	git fetch template && git checkout template/master .github
