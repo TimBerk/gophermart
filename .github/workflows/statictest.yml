@@ -13,7 +13,18 @@ jobs:
     container: golang:1.23
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: User - Verify dependencies
+        run:  |
+          go mod verify
+
+      - name: User - Run go vet
+        run:  |
+          go vet ./...
+
+      - name: User - Run tests
+        run: go test -count=1 -cover -vet=off ./...
 
       - name: Download statictest binary
         uses: robinraju/release-downloader@v1.8
